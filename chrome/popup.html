@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DeloCN Helper — 1688 в рублях и калькулятор доставки</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <header class="ext-header">
+    <div class="brand-row">
+      <div class="brand-left">
+        <a href="https://delocn.com" target="_blank" rel="noopener" class="logo-badge">
+          <span class="logo-delo">DELO</span><span class="logo-cn">CN</span>
+        </a>
+        <div class="brand-sub">B2B Логистика • Выкуп 1688 • Платежи в КНР</div>
+      </div>
+      <button id="btn-sync-rates" type="button" class="btn-sync" title="Синхронизировать курс с delocn.com">🔄 Курс</button>
+    </div>
+
+    <div class="rates-bar">
+      <div class="rate-chip">
+        <span class="rate-lbl">Выкуп 1688/Taobao:</span>
+        <strong id="rate-1688-val">12.90 ₽/¥</strong>
+      </div>
+      <div class="rate-chip">
+        <span class="rate-lbl">Инвойс ВЭД:</span>
+        <strong id="rate-inv-val">12.75 ₽/¥</strong>
+      </div>
+      <div class="rate-chip">
+        <span class="rate-lbl">Карго USD:</span>
+        <strong id="rate-usd-val">92.50 ₽/$</strong>
+      </div>
+    </div>
+  </header>
+
+  <nav class="ext-tabs">
+    <button type="button" class="tab-btn active" data-tab="tab-calc">🧮 16 линий Карго</button>
+    <button type="button" class="tab-btn" data-tab="tab-buyout">🛒 Выкуп 1688 (₽)</button>
+    <button type="button" class="tab-btn" data-tab="tab-payment">💳 Оплата в КНР</button>
+  </nav>
+
+  <main class="ext-body">
+    <!-- TAB 1: 16-LINE CARGO & DENSITY CALCULATOR -->
+    <section id="tab-calc" class="tab-pane active">
+      <div class="form-group">
+        <label for="calc-line">Спецлиния прайс-листа (16 линий):</label>
+        <select id="calc-line"></select>
+      </div>
+
+      <div class="form-row-2">
+        <div class="form-group">
+          <label for="calc-dest">Город назначения:</label>
+          <select id="calc-dest">
+            <option value="moscow">Москва (РФ)</option>
+            <option value="almaty">Алматы (КЗ)</option>
+            <option value="bishkek">Бишкек (КР)</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="calc-val">Стоимость груза ($):</label>
+          <input type="number" id="calc-val" value="2500" min="10" step="50">
+        </div>
+      </div>
+
+      <div class="form-row-2">
+        <div class="form-group">
+          <label for="calc-weight">Вес партии (кг):</label>
+          <input type="number" id="calc-weight" value="320" min="1" step="5">
+        </div>
+        <div class="form-group">
+          <label for="calc-vol">Объём партии (м³):</label>
+          <input type="number" id="calc-vol" value="1.4" min="0.01" step="0.05">
+        </div>
+      </div>
+
+      <div class="checkbox-row">
+        <label class="chk-label">
+          <input type="checkbox" id="calc-unbranded">
+          <span>Одежда/обувь без бренда (+$0.20/кг по прайсу)</span>
+        </label>
+      </div>
+
+      <div class="result-card">
+        <div class="res-grid">
+          <div>
+            <span class="res-lbl">Плотность и срок:</span>
+            <strong id="res-density">228.6 кг/м³ • 8–10 дн.</strong>
+          </div>
+          <div>
+            <span class="res-lbl">Ставка по прайсу:</span>
+            <strong id="res-rate">$3.40 / кг</strong>
+          </div>
+          <div>
+            <span class="res-lbl">Фрахт + Страховка:</span>
+            <strong id="res-breakdown">$1 088 + $25 (1%)</strong>
+          </div>
+          <div>
+            <span class="res-lbl">ИТОГО ДОСТАВКА:</span>
+            <strong id="res-total" class="res-highlight">$1 113 (≈ 102 953 ₽)</strong>
+          </div>
+        </div>
+      </div>
+
+      <div class="cta-stack">
+        <button type="button" id="btn-calc-tg-bot" class="btn-tg-primary">
+          🤖 Получить точную смету в Telegram-Боте
+        </button>
+        <button type="button" id="btn-calc-tg-mgr" class="btn-tg-secondary">
+          👨‍💼 Написать Онлайн-менеджеру ВЭД
+        </button>
+      </div>
+    </section>
+
+    <!-- TAB 2: 1688 / TAOBAO / POIZON BUYOUT IN RUB -->
+    <section id="tab-buyout" class="tab-pane">
+      <div class="active-url-box">
+        <div class="url-box-hdr">
+          <span>Ссылка на товар (1688 / Taobao / Poizon):</span>
+          <button type="button" id="btn-grab-url" class="btn-mini">Взять из вкладки</button>
+        </div>
+        <input type="text" id="buyout-url" placeholder="https://detail.1688.com/offer/...">
+      </div>
+
+      <div class="form-row-2">
+        <div class="form-group">
+          <label for="buyout-cny">Сумма товара в юанях (¥):</label>
+          <input type="number" id="buyout-cny" value="5000" min="1" step="100">
+        </div>
+        <div class="form-group">
+          <label for="buyout-comm">Комиссия выкупа и проверки:</label>
+          <select id="buyout-comm">
+            <option value="0.05">5% (Партия до 300 000 ₽)</option>
+            <option value="0.03" selected>3% (Опт от 300 000 ₽)</option>
+            <option value="0.02">2% (Крупный опт от 1 млн ₽)</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="result-card">
+        <div class="res-grid">
+          <div>
+            <span class="res-lbl">Товар по курсу выкупа:</span>
+            <strong id="buy-rub-base">64 500 ₽</strong>
+          </div>
+          <div>
+            <span class="res-lbl">Комиссия + инспекция в Иу:</span>
+            <strong id="buy-rub-fee">1 935 ₽ (3%)</strong>
+          </div>
+        </div>
+        <div class="res-total-bar">
+          <span>ИТОГО К ОПЛАТЕ ЗА ВЫКУП:</span>
+          <strong id="buy-rub-total" class="res-highlight">66 435 ₽</strong>
+        </div>
+      </div>
+
+      <div class="checkbox-row">
+        <label class="chk-label">
+          <input type="checkbox" id="chk-auto-badge" checked>
+          <span>Показывать цены в рублях (₽) прямо на сайтах 1688 / Taobao</span>
+        </label>
+      </div>
+
+      <div class="cta-stack">
+        <button type="button" id="btn-buyout-tg-bot" class="btn-tg-primary">
+          🤖 Отправить ссылку на выкуп в Telegram-Бот
+        </button>
+        <button type="button" id="btn-buyout-tg-mgr" class="btn-tg-secondary">
+          👨‍💼 Обсудить выкуп и торг с фабрикой
+        </button>
+      </div>
+    </section>
+
+    <!-- TAB 3: B2B INVOICE PAYMENT & WHITE VED -->
+    <section id="tab-payment" class="tab-pane">
+      <div class="form-row-2">
+        <div class="form-group">
+          <label for="pay-cny">Сумма инвойса в КНР (¥ CNY):</label>
+          <input type="number" id="pay-cny" value="50000" min="100" step="1000">
+        </div>
+        <div class="form-group">
+          <label for="pay-mode">Способ оплаты поставщику:</label>
+          <select id="pay-mode">
+            <option value="0.015">Платёжный агент ВЭД (Контракт 181-И • от 1.5%)</option>
+            <option value="0.02">Материковый юань RMB на фабрику (2.0%)</option>
+            <option value="0.025">Пополнение Alipay / WeChat / 1688 (2.5%)</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="result-card">
+        <div class="res-grid">
+          <div>
+            <span class="res-lbl">По курсу инвойса ВЭД:</span>
+            <strong id="pay-rub-base">637 500 ₽</strong>
+          </div>
+          <div>
+            <span class="res-lbl">Вознаграждение агента:</span>
+            <strong id="pay-rub-fee">9 563 ₽ (1.5%)</strong>
+          </div>
+        </div>
+        <div class="res-total-bar">
+          <span>ИТОГО ПО ДОГОВОРУ В РУБЛЯХ:</span>
+          <strong id="pay-rub-total" class="res-highlight">647 063 ₽</strong>
+        </div>
+      </div>
+
+      <ul class="trust-list">
+        <li>✅ Склады 4 500 м²: Иу (2 200 м²), Гуанчжоу (1 500 м²), Шэньчжэнь (800 м²)</li>
+        <li>✅ Белая доставка с ГТД, УПД с НДС 22% (ЭДО) и «Честный знак»</li>
+        <li>✅ Зачисление юаней на счёт китайской фабрики за 1–2 рабочих дня</li>
+      </ul>
+
+      <div class="cta-stack">
+        <button type="button" id="btn-pay-tg-mgr" class="btn-tg-secondary">
+          👨‍💼 Запросить проверку инвойса в Telegram
+        </button>
+      </div>
+    </section>
+  </main>
+
+  <footer class="ext-footer">
+    <a href="https://delocn.com/kalkulyator/" target="_blank" rel="noopener">Веб-калькулятор</a>
+    <span>•</span>
+    <a href="https://delocn.com/tarify/" target="_blank" rel="noopener">Прайс 16 линий</a>
+    <span>•</span>
+    <a href="https://delocn.com/extension-privacy/" target="_blank" rel="noopener">Конфиденциальность</a>
+  </footer>
+
+  <script src="popup.js"></script>
+</body>
+</html>
